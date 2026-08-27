@@ -1,0 +1,179 @@
+:root {
+    --bg: #f7f7f7;
+    --text: #222;
+    --accent: #2f4f6f;
+    --accent-soft: #e3edf7;
+    --card-bg: #ffffff;
+    --border: #d0d0d0;
+    --max-width: 1100px;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* Header */
+.site-header {
+    background: var(--accent);
+    color: white;
+    padding: 1.5rem 0;
+    box-shadow: var(--shadow);
+}
+
+.site-header h1 {
+    margin: 0;
+    font-family: "Merriweather", serif;
+    font-size: 2rem;
+    text-align: center;
+}
+
+/* Navigation */
+.nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.nav a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    transition: background 0.2s;
+    font-weight: 600;
+}
+
+.nav a:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.nav a.active {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Main layout */
+.main {
+    max-width: var(--max-width);
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+/* Section */
+.section {
+    margin-bottom: 2.5rem;
+}
+
+.section-header h2 {
+    font-family: "Merriweather", serif;
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+}
+
+/* Lab blocks */
+.lab-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.lab-card h3 {
+    margin-top: 0;
+    color: var(--accent);
+    font-size: 1.2rem;
+}
+
+.lab-card p {
+    margin-bottom: 0.5rem;
+}
+
+/* Footer */
+.site-footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    color: #555;
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+}
+
+/* Lab Menu Card */
+.lab-menu-card {
+    background: var(--accent-soft);
+    border: 1px solid rgba(47, 79, 111, 0.15);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2.5rem;
+}
+
+.lab-menu-card p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+}
+
+/* Button container */
+.lab-menu-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Individual buttons */
+.lab-menu-button {
+    display: block;
+    text-align: center;
+    background: var(--accent);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.lab-menu-button:hover {
+    background: #3b5f80;
+    transform: translateY(-2px);
+}
+
+/* Responsive: turn buttons into two columns on larger screens */
+@media (min-width: 700px) {
+    .lab-menu-buttons {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.lab-button {
+    display: inline-block;
+    background: var(--accent);
+    color: #ffffff;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 0.75rem;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.lab-button:hover {
+    background: #3b5f80;
+    transform: translateY(-2px);
+}
+
