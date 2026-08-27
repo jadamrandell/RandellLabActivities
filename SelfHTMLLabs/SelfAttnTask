@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Digit Parity Task</title>
+  <!-- Load jsPsych core and plugins -->
+  <script src="https://unpkg.com/jspsych@7.3.3"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+  <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css" />
+  
+  <style>
+    .stim-text {
+      font-family: monospace;
+      font-size: 40px;
+      white-space: pre; 
+    }
+    .key-label {
+      position: fixed;
+      bottom: 20px;
+      font-size: 24px;
+      color: #666;
+      font-family: sans-serif;
+    }
+    .label-left {
+      left: 30px;
+    }
+    .label-right {
+      right: 30px;
+    }
+    .center-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .feedback-text {
+      font-size: 30px; 
+      color: #d9534f; 
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const jsPsych = initJsPsych({
+      on_finish: function() {
+        jsPsych.data.displayData();
+      }
+    });
+
+    const timeline = [];
+
+    // 1. Instructions
+    const instructions = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <h2>Instructions</h2>
+        <p>A pair of digits will appear on the screen.</p>
+        <p><strong>Please note: Each set of numbers will appear very briefly (for just a fraction of a second), so you must be ready to catch them!</strong></p>
+        <p>Your task is to respond as rapidly as possible:</p>
+        <p>Press the <strong>'A'</strong> key if both numbers are odd or both are even (SAME).</p>
+        <p>Press the <strong>'L'</strong> key if one is odd and the other is even (DIFFERENT).</p>
+        <p>Ignore any words that appear between the numbers.</p>
+        <br>
+        <p>You will complete four blocks of trials.</p>
+        <p>Press any key to continue.</p>
+      `
+    };
+    timeline.push(instructions);
+
+    // 2. Capture Name
+    const ask_name = {
+      type: jsPsychSurveyText,
+      questions: [
+        {prompt: "Before we begin the task, please write your name in the space provided.", name: 'participant_name', required: true}
+      ],
+      on_finish: function(data){
+        window.myName = data.response.participant_name.toUpperCase();
+      }
+    };
+    timeline.push(ask_name);
+
+    // 3. Start Practice screen
+    const start_practice = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <p>You will start with a short practice round.</p>
+        <p>Press any key to begin practice.</p>
+      `,
+      post_trial_gap: 1000 
+    };
+    timeline.push(start_practice);
+
+    // 4. Variables & Functions
+    const allowed_digits = [2, 3, 5, 8]; 
+    const control_words = [
+      "WATER", "TABLE", "CHAIR", "PAPER", 
+      "RIVER", "STONE", "CLOCK", "BREAD", 
+      "APPLE", "GLASS", "PLANT", "CLOUD", 
+      "WINDOW", "PENCIL", "STREET"
+    ];
+    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // 5. Trial Logic with Custom 51ms Timeout
+    const parity_trial = {
+      type: jsPsychHtmlKeyboardResponse,
+      on_start: function(trial) {
+        const digit1 = getRandom(allowed_digits);
+        const digit2 = getRandom(allowed_digits);
+        const isSameParity = (digit1 % 2) === (digit2 % 2);
+        trial.data.correct_response = isSameParity ? 'a' : 'l';
+
+        const isNameTrial = jsPsych.timelineVariable('use_name');
+        const centerWord = isNameTrial ? window.myName : getRandom(control_words);
+        
+        trial.stimulus = `
+          <div class="key-label label-left"><strong>A</strong> = SAME</div>
+          <div class="key-label label-right"><strong>L</strong> = DIFFERENT</div>
+          <div id="center-stimulus" class="stim-text center-container">${digit1}       ${centerWord}       ${digit2}</div>
+        `;
+      },
+      choices: ['a', 'l'],
+      trial_duration: null, 
+      post_trial_gap: 0, 
+      data: {
+        task: 'parity_judgment',
+        phase: jsPsych.timelineVariable('phase'),
+        is_name_trial: jsPsych.timelineVariable('use_name')
+      },
+      on_load: function() {
+        setTimeout(function() {
+          const centerElement = document.getElementById('center-stimulus');
+          if (centerElement) {
+            centerElement.style.visibility = 'hidden';
+          }
+        }, 51);
+      },
+      on_finish: function(data) {
+        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+      }
+    };
+
+    // 6. Error Feedback & ITI
+    const error_feedback = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <div class="feedback-text">
+          <p><strong>Incorrect</strong></p>
+          <p>Press <strong>'A'</strong> if both numbers are odd or both are even (SAME).</p>
+          <p>Press <strong>'L'</strong> if one is odd and the other is even (DIFFERENT).</p>
+        </div>
+      `,
+      choices: "NO_KEYS",
+      trial_duration: 2000, 
+      post_trial_gap: 0
+    };
+
+    const conditional_feedback = {
+      timeline: [error_feedback],
+      conditional_function: function() {
+        const last_trial = jsPsych.data.get().last(1).values()[0];
+        return !last_trial.correct;
+      }
+    };
+
+    // The Fixation Cross replaces the blank screen
+    const inter_trial_interval = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '<div class="stim-text center-container">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: 1000
+    };
+
+    // 7. Practice Block Sequence
+    const practice_procedure = {
+      timeline: [parity_trial, conditional_feedback, inter_trial_interval],
+      timeline_variables: [
+        { use_name: false, phase: 'practice' }, { use_name: false, phase: 'practice' }, 
+        { use_name: false, phase: 'practice' }, { use_name: false, phase: 'practice' }, 
+        { use_name: false, phase: 'practice' }, { use_name: false, phase: 'practice' },
+        { use_name: false, phase: 'practice' }, { use_name: false, phase: 'practice' },
+        { use_name: false, phase: 'practice' }, { use_name: false, phase: 'practice' }
+      ]
+    };
+    timeline.push(practice_procedure);
+
+    const test_instructions = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <h2>Practice Complete</h2>
+        <p>You are now ready for the main task.</p>
+        <p>As a reminder, press <strong>'A'</strong> for SAME and <strong>'L'</strong> for DIFFERENT.</p>
+        <p>Remember to respond as fast as you can while staying accurate.</p>
+        <p>Press any key to begin.</p>
+      `,
+      post_trial_gap: 1000 
+    };
+    timeline.push(test_instructions);
+
+    // 8. Measurement Block Definition
+    const test_block = {
+      timeline: [parity_trial, conditional_feedback, inter_trial_interval],
+      timeline_variables: [
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' }, 
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' },
+        { use_name: true, phase: 'test' },  // Name trial
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' }, 
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' },
+        { use_name: true, phase: 'test' },   // Name trial
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' }, 
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' },
+        { use_name: true, phase: 'test' },  // Name trial
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' }, 
+        { use_name: false, phase: 'test' }, { use_name: false, phase: 'test' },
+        { use_name: true, phase: 'test' }   // Name trial
+      ],
+      randomize_order: true
+    };
+
+    // 9. Break Screen Definition
+    const rest_break = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <h2>Take a break</h2>
+        <p>You may take a brief break.</p>
+        <p>When you are ready to begin again, press any key.</p>
+      `,
+      post_trial_gap: 1000
+    };
+
+    // 10. Assemble the 4 Blocks with Breaks
+    timeline.push(test_block);
+    timeline.push(rest_break);
+    timeline.push(test_block);
+    timeline.push(rest_break);
+    timeline.push(test_block);
+    timeline.push(rest_break);
+    timeline.push(test_block);
+
+    // 11. Filtered Results Display
+    const debrief_screen = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function() {
+        const name_rt = jsPsych.data.get().filter({task: 'parity_judgment', phase: 'test', is_name_trial: true, correct: true}).select('rt').mean();
+        const control_rt = jsPsych.data.get().filter({task: 'parity_judgment', phase: 'test', is_name_trial: false, correct: true}).select('rt').mean();
+
+        const display_name_rt = isNaN(name_rt) ? "N/A" : Math.round(name_rt) + " ms";
+        const display_control_rt = isNaN(control_rt) ? "N/A" : Math.round(control_rt) + " ms";
+
+        return `
+          <h2>Task Complete</h2>
+          <p>Here are your average reaction times (Correct Trials Only):</p>
+          <table style="margin: 0 auto; border-collapse: collapse; width: 350px; font-size: 20px;">
+            <tr style="border-bottom: 2px solid #000;">
+              <th style="padding: 10px; text-align: left;">Distractor</th>
+              <th style="padding: 10px; text-align: center;">Average RT</th>
+            </tr>
+            <tr>
+              <td style="padding: 10px; text-align: left;">Control Word</td>
+              <td style="padding: 10px; text-align: center;">${display_control_rt}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; text-align: left;">Your Name</td>
+              <td style="padding: 10px; text-align: center;">${display_name_rt}</td>
+            </tr>
+          </table>
+          <br>
+          <p style="color: #d9534f;"><strong>Please write down your results to report to your instructor.</strong></p>
+          <br>
+          <p>Press any key to finish.</p>
+        `;
+      }
+    };
+    timeline.push(debrief_screen);
+
+    jsPsych.run(timeline);
+  </script>
+</body>
+</html>
