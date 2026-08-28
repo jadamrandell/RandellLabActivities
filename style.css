@@ -70,14 +70,6 @@ body {
     padding: 0 1.5rem;
 }
 
-.main h1 {
-    text-align: center;
-    font-family: "Merriweather", serif;
-    font-size: 2rem;
-    color: var(--accent);
-    margin-bottom: 1.5rem;
-}
-
 /* Section */
 .section {
     margin-bottom: 2.5rem;
@@ -88,6 +80,15 @@ body {
     font-size: 1.5rem;
     color: var(--accent);
     margin-bottom: 1rem;
+}
+
+/*Main Header*/
+.main h1 {
+    text-align: center;
+    font-family: "Merriweather", serif;
+    font-size: 2rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
 }
 
 /* Lab blocks */
