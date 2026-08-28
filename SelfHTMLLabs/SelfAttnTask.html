@@ -72,7 +72,7 @@
     const ask_name = {
       type: jsPsychSurveyText,
       questions: [
-        {prompt: "Before we begin the task, please write your name in the space provided.", name: 'participant_name', required: true}
+        {prompt: "Before we begin the task, please write your first name (ONLY) in the space provided.", name: 'participant_name', required: true}
       ],
       on_finish: function(data){
         window.myName = data.response.participant_name.toUpperCase();
