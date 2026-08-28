@@ -1,1 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/jspsych@7.3.3"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+  <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css" />
+  <style>
+    body { 
+      background: #555; 
+      font-family: sans-serif;
+    }
+    .instruction-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 650px;
+      margin: auto;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .screen-container {
+      width: 835px;
+      height: 650px; 
+      background: repeating-conic-gradient(#808080 0% 25%, #e6e6e6 0% 50%) 50% / 40px 40px; 
+      position: relative;
+      margin: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .stimulus-container { display: flex; background: rgb(156, 156, 156); border: 1px solid #000; }
+    .flank { display: flex; align-items: center; justify-content: center; }
+    .marker { font-size: 24px; font-weight: bold; color: #333; }
+    
+    /* Horizontal */
+    .stim-horiz { flex-direction: row; height: 255px; width: 485px; }
+    .flank-horiz { width: 200px; height: 100%; }
+    .grad-1-horiz { width: 42.5px; height: 100%; background: linear-gradient(to right, rgb(156,156,156), rgb(255,255,255)); }
+    .grad-2-horiz { width: 42.5px; height: 100%; background: linear-gradient(to right, rgb(50,50,50), rgb(156,156,156)); }
 
+    /* Vertical */
+    .stim-vert { flex-direction: column; width: 255px; height: 485px; }
+    .flank-vert { width: 100%; height: 200px; }
+    .grad-1-vert { width: 100%; height: 42.5px; background: linear-gradient(to bottom, rgb(156,156,156), rgb(255,255,255)); }
+    .grad-2-vert { width: 100%; height: 42.5px; background: linear-gradient(to bottom, rgb(50,50,50), rgb(156,156,156)); }
+
+    /* Controls */
+    .controls { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 20px; background: rgba(255, 255, 255, 0.85); padding: 10px 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .test-square-container { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .control-label { font-size: 16px; font-weight: bold; color: #000; margin-bottom: 2px; }
+    .test-square { width: 40px; height: 40px; background: rgb(156, 156, 156); border: 1px solid #333; }
+    .adjust-btn { padding: 2px 10px; cursor: pointer; font-weight: bold; }
+
+    /* Results Screen Formatting */
+    .results-box {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 15px 25px;
+      margin: 20px 0;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .result-row:last-child {
+      border-bottom: none;
+    }
+    .result-text {
+      font-size: 16px;
+      color: #333;
+    }
+    .result-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+      background: #eef2f5;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #dcdcdc;
+      white-space: nowrap;
+      margin-left: 15px;
+    }
+    .lab-notes {
+      background: #fffbe6;
+      border-left: 4px solid #ffe58f;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 0 4px 4px 0;
+    }
+    .lab-notes p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #5c5c5c;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body></body>
+<script>
+  const jsPsych = initJsPsych();
+
+  // 1. Welcome Screen
+  const welcome_screen = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div class="instruction-container">
+        <h2>Visual Matching Task</h2>
+        <p>In the following screens, you will be asked to adjust the brightness of two small squares until they match the apparent difference in brightness that you see between the two territories adjoining the edge of a larger reference stimulus presented in the center of the screen.</p>
+        <p>Use the '+' and '-' buttons to adjust the brightness of the squares labeled A and B to match the corresponding territories.</p>
+        <p>Once you are satisfied with your match, click the MATCH button to proceed.</p>
+      </div>
+      <br>
+    `,
+    choices: ['Start Task']
+  };
+
+  let val1, val2;
+  const step = 5; 
+
+  const html_horizontal = `
+    <div class="screen-container">
+      <div class="stimulus-container stim-horiz">
+        <div class="flank flank-horiz"><div class="marker">A</div></div>
+        <div class="grad-1-horiz"></div>
+        <div class="grad-2-horiz"></div>
+        <div class="flank flank-horiz"><div class="marker">B</div></div>
+      </div>
+      <div class="controls">
+        <div class="test-square-container"><div class="control-label">A</div><div id="square1" class="test-square"></div><div><button id="darken1" class="adjust-btn">-</button><button id="lighten1" class="adjust-btn">+</button></div></div>
+        <div class="test-square-container"><div class="control-label">B</div><div id="square2" class="test-square"></div><div><button id="darken2" class="adjust-btn">-</button><button id="lighten2" class="adjust-btn">+</button></div></div>
+      </div>
+    </div>
+  `;
+
+  const html_vertical = `
+    <div class="screen-container">
+      <div class="stimulus-container stim-vert">
+        <div class="flank flank-vert"><div class="marker">A</div></div>
+        <div class="grad-1-vert"></div>
+        <div class="grad-2-vert"></div>
+        <div class="flank flank-vert"><div class="marker">B</div></div>
+      </div>
+      <div class="controls">
+        <div class="test-square-container"><div class="control-label">A</div><div id="square1" class="test-square"></div><div><button id="darken1" class="adjust-btn">-</button><button id="lighten1" class="adjust-btn">+</button></div></div>
+        <div class="test-square-container"><div class="control-label">B</div><div id="square2" class="test-square"></div><div><button id="darken2" class="adjust-btn">-</button><button id="lighten2" class="adjust-btn">+</button></div></div>
+      </div>
+    </div>
+  `;
+
+  // 2. The Task Timeline
+  const cornsweet_trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: jsPsych.timelineVariable('stimulus_html'),
+    choices: ['MATCH'],
+    data: {
+      orientation: jsPsych.timelineVariable('orientation')
+    },
+    on_load: function() {
+      val1 = 156; val2 = 156;
+      const updateColor = (id, val) => { document.getElementById(id).style.background = `rgb(${val}, ${val}, ${val})`; };
+      updateColor('square1', val1); updateColor('square2', val2);
+
+      document.getElementById('darken1').onclick = () => { val1 = Math.max(0, val1 - step); updateColor('square1', val1); };
+      document.getElementById('lighten1').onclick = () => { val1 = Math.min(255, val1 + step); updateColor('square1', val1); };
+      document.getElementById('darken2').onclick = () => { val2 = Math.max(0, val2 - step); updateColor('square2', val2); };
+      document.getElementById('lighten2').onclick = () => { val2 = Math.min(255, val2 + step); updateColor('square2', val2); };
+    },
+    on_finish: function(data) {
+      data.match_A_val = val1; 
+      data.match_B_val = val2; 
+    }
+  };
+
+  const experiment_timeline = {
+    timeline: [cornsweet_trial],
+    timeline_variables: [
+      { orientation: 'horizontal', stimulus_html: html_horizontal },
+      { orientation: 'horizontal', stimulus_html: html_horizontal },
+      { orientation: 'horizontal', stimulus_html: html_horizontal },
+      { orientation: 'vertical', stimulus_html: html_vertical },
+      { orientation: 'vertical', stimulus_html: html_vertical },
+      { orientation: 'vertical', stimulus_html: html_vertical }
+    ],
+    randomize_order: true
+  };
+
+  // 3. Results Screen
+  const results_screen = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function() {
+      const data = jsPsych.data.get();
+      const horiz = data.filter({orientation: 'horizontal'}).values();
+      const vert = data.filter({orientation: 'vertical'}).values();
+
+      const calcAverageDiff = (trials) => {
+        if (trials.length === 0) return "0.00";
+        let sum = 0;
+        trials.forEach(t => {
+          sum += Math.abs(t.match_A_val - t.match_B_val);
+        });
+        return (sum / trials.length).toFixed(2);
+      };
+
+      return `
+        <div class="instruction-container">
+          <h2>Task Complete</h2>
+          <p>Thank you for participating! Please find your results below.</p>
+          
+          <div class="results-box">
+            <div class="result-row">
+              <span class="result-text">Average Difference in Perceived Luminance for <strong>HORIZONTAL</strong> figures:</span>
+              <span class="result-value">${calcAverageDiff(horiz)} cd/m2</span>
+            </div>
+            <div class="result-row">
+              <span class="result-text">Average Difference in Perceived Luminance for <strong>VERTICAL</strong> figures:</span>
+              <span class="result-value">${calcAverageDiff(vert)} cd/m2</span>
+            </div>
+          </div>
+
+          <div class="lab-notes">
+            <p>(1) cd/m2 = candelas per square meter (a measure of luminance)</p>
+            <p>(2) Remember to record these values to report for the lab activity.</p>
+          </div>
+        </div>
+        <br>
+      `;
+    },
+    choices: ['Finish']
+  };
+
+  jsPsych.run([welcome_screen, experiment_timeline, results_screen]);
+</script>
+</html>
